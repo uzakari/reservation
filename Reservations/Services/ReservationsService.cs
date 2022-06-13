@@ -82,10 +82,10 @@ namespace Reservations.Services
             var reservationHourRange = newReservation.To.Hour - newReservation.From.Hour;
             var allExistingReservation = _queryAll.Execute();
 
-            var validReservation = allExistingReservation
-                                  .Where(x => x.Hall.Number == newReservation.LectureHallNumber && (x.From.Hour == newReservation.From.Hour || x.From.Hour == x.To.Hour));
+            var validReservationNonConflicting = allExistingReservation
+                                  .Where(x => x.Hall.Number == newReservation.LectureHallNumber && (x.From.Hour == newReservation.From.Hour && x.To.Hour == x.To.Hour));
 
-            var validReservationHall = allExistingReservation.Where(x => x.Hall.Number == newReservation.LectureHallNumber);
+            var validReservationHall = allExistingReservation.Where(x => x.Lecturer.Id == newReservation.LectureHallNumber);
             var validReservationWithExistingLeturer = allExistingReservation.Where(x => x.Lecturer.Id == newReservation.LecturerId);
 
 
@@ -105,7 +105,7 @@ namespace Reservations.Services
             {
                 result = ValidationResult.TooLong;
             }
-            else if (validReservation.Any())
+            else if (validReservationNonConflicting.Any())
             {
                 result = ValidationResult.Conflicting;
             }
