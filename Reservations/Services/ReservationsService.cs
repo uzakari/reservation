@@ -79,6 +79,46 @@ namespace Reservations.Services
             // Remember ! Check ALL validation rules and set result with appropriate enum flag described above.
             // Note that for reservation dates, we take into account only date and an hour, minutes and seconds don't matter.
 
+            var reservationHourRange = newReservation.To.Hour - newReservation.From.Hour;
+            var allExistingReservation = _queryAll.Execute();
+
+            var validReservation = allExistingReservation
+                                  .Where(x => x.Hall.Number == newReservation.LectureHallNumber && (x.From.Hour == newReservation.From.Hour || x.From.Hour == x.To.Hour));
+
+            var validReservationHall = allExistingReservation.Where(x => x.Hall.Number == newReservation.LectureHallNumber);
+            var validReservationWithExistingLeturer = allExistingReservation.Where(x => x.Lecturer.Id == newReservation.LecturerId);
+
+
+            if (newReservation.From.Day != newReservation.To.Day)
+            {
+                result = ValidationResult.MoreThanOneDay;
+            }
+            else if (newReservation.From >= newReservation.To)
+            {
+                result = ValidationResult.ToBeforeFrom;
+            }
+            else if ((newReservation.From.Hour >= 8 && newReservation.From.Hour <= 18) && (newReservation.To.Hour >= 8 && newReservation.To.Hour <= 18))
+            {
+                result = ValidationResult.OutsideWorkingHours;
+            }
+            else if (reservationHourRange > 3)
+            {
+                result = ValidationResult.TooLong;
+            }
+            else if (validReservation.Any())
+            {
+                result = ValidationResult.Conflicting;
+            }
+            else if (validReservationHall.Count() == 0)
+            {
+                result = ValidationResult.HallDoesNotExist;
+            }
+            else if (validReservationWithExistingLeturer.Count() == 0)
+            {
+                result = ValidationResult.LecturerDoesNotExist;
+            }
+
+
             return result;
         }
 
