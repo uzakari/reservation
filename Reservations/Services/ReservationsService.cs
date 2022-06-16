@@ -83,9 +83,9 @@ namespace Reservations.Services
             var allExistingReservation = _queryAll.Execute();
 
             var validReservationNonConflicting = allExistingReservation
-                                  .Where(x => x.Hall.Number == newReservation.LectureHallNumber && (x.From.Hour == newReservation.From.Hour && x.To.Hour == x.To.Hour));
+                                  .Where(x => x.Hall.Number == newReservation.LectureHallNumber && (x.From.Hour == newReservation.From.Hour && x.To.Hour == newReservation.To.Hour));
 
-            var validReservationHall = allExistingReservation.Where(x => x.Lecturer.Id == newReservation.LectureHallNumber);
+            var validReservationHall = allExistingReservation.Where(x => x.Hall.Number == newReservation.LectureHallNumber);
             var validReservationWithExistingLeturer = allExistingReservation.Where(x => x.Lecturer.Id == newReservation.LecturerId);
 
 
@@ -97,25 +97,30 @@ namespace Reservations.Services
             {
                 result = ValidationResult.ToBeforeFrom;
             }
-            else if ((newReservation.From.Hour >= 8 && newReservation.From.Hour <= 18) && (newReservation.To.Hour >= 8 && newReservation.To.Hour <= 18))
-            {
-                result = ValidationResult.OutsideWorkingHours;
-            }
             else if (reservationHourRange > 3)
             {
                 result = ValidationResult.TooLong;
             }
+            else if (!(newReservation.From.Hour >= 8 && newReservation.To.Hour <= 18))
+            {
+                result = ValidationResult.OutsideWorkingHours;
+            }
+
             else if (validReservationNonConflicting.Any())
             {
                 result = ValidationResult.Conflicting;
             }
-            else if (validReservationHall.Count() == 0)
+            else if (validReservationHall.Count() == 0 && validReservationNonConflicting.Any())
             {
                 result = ValidationResult.HallDoesNotExist;
             }
-            else if (validReservationWithExistingLeturer.Count() == 0)
+            else if (validReservationWithExistingLeturer.Count() == 0 && validReservationNonConflicting.Any())
             {
                 result = ValidationResult.LecturerDoesNotExist;
+            }
+            else
+            {
+                result = ValidationResult.Ok;
             }
 
 
